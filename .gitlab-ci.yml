@@ -1,0 +1,33 @@
+---
+image: ghcr.io/astral-sh/uv:python3.14-bookworm-slim
+
+stages:
+  - test
+  - build
+
+variables:
+  UV_CACHE_DIR: .uv-cache
+
+cache:
+  paths:
+    - .uv-cache/
+
+test:
+  stage: test
+  before_script:
+    - apt-get update
+    - apt-get install --yes --no-install-recommends shellcheck
+  script:
+    - uv sync --locked --all-groups
+    - uv run ruff check .
+    - uv run mypy speaktap tests
+    - uv run pytest
+    - shellcheck install.sh toggle.sh
+
+build:
+  stage: build
+  script:
+    - uv build
+  artifacts:
+    paths:
+      - dist/
