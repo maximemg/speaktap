@@ -50,12 +50,23 @@ def log_path() -> Path:
     return runtime_directory() / "service.log"
 
 
+def _private_directory(directory: Path) -> Path:
+    """Create or adopt a directory and force owner-only access.
+
+    The mode passed to mkdir is masked by umask when creating, and ignored
+    entirely when the directory already exists, so neither case reliably
+    yields 0700 on its own. Set it explicitly instead.
+    """
+
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    directory.chmod(0o700)
+    return directory
+
+
 def state_directory() -> Path:
     configured = os.environ.get("XDG_STATE_HOME", "").strip()
     base = Path(configured) if configured else Path.home() / ".local" / "state"
-    directory = base / "speaktap"
-    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    return directory
+    return _private_directory(base / "speaktap")
 
 
 def session_log_path() -> Path:
@@ -65,9 +76,7 @@ def session_log_path() -> Path:
 def config_directory() -> Path:
     configured = os.environ.get("XDG_CONFIG_HOME", "").strip()
     base = Path(configured) if configured else Path.home() / ".config"
-    directory = base / "speaktap"
-    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    return directory
+    return _private_directory(base / "speaktap")
 
 
 def installed_config_path() -> Path:
