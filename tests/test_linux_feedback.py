@@ -4,7 +4,58 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from speaktap.output.linux import notify_status, play_sound
+from speaktap.domain import CleanupStatus, TranscriptionResult
+from speaktap.output.linux import (
+    ClipboardOutput,
+    TypingOutput,
+    notify_status,
+    play_sound,
+)
+
+
+def _result(text: str) -> TranscriptionResult:
+    return TranscriptionResult(
+        session_id="session",
+        raw_text=text,
+        cleaned_text=None,
+        cleanup_status=CleanupStatus.DISABLED,
+        chunks=(),
+    )
+
+
+def _record_run(monkeypatch: Any) -> list[tuple[list[str], dict[str, Any]]]:
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def fake_run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+        calls.append((command, kwargs))
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    return calls
+
+
+def test_typing_output_keeps_dictated_text_out_of_argv(monkeypatch: Any) -> None:
+    """/proc/<pid>/cmdline is world readable, so argv must not carry the text."""
+
+    calls = _record_run(monkeypatch)
+
+    TypingOutput().deliver(_result("board meeting at nine"))
+
+    command, kwargs = calls[0]
+    assert "xdotool" in command
+    assert all("board meeting" not in argument for argument in command)
+    assert kwargs["input"] == b"board meeting at nine"
+
+
+def test_clipboard_output_keeps_dictated_text_out_of_argv(monkeypatch: Any) -> None:
+    calls = _record_run(monkeypatch)
+
+    ClipboardOutput().deliver(_result("board meeting at nine"))
+
+    command, kwargs = calls[0]
+    assert "xclip" in command
+    assert all("board meeting" not in argument for argument in command)
+    assert kwargs["input"] == b"board meeting at nine"
 
 
 def test_notification_contains_lifecycle_message(monkeypatch: Any) -> None:

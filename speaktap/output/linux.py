@@ -35,8 +35,11 @@ class TypingOutput:
         text = result.output_text
         if not text:
             return
-        command = ["xdotool", "type", "--clearmodifiers", "--delay", "0", "--", text]
-        subprocess.run(command, check=True, timeout=15)
+        # Pass the transcript on stdin rather than as an argument. Argument
+        # vectors are visible to any local user through /proc/<pid>/cmdline,
+        # which would expose dictated text for the lifetime of the call.
+        command = ["xdotool", "type", "--clearmodifiers", "--delay", "0", "--file", "-"]
+        subprocess.run(command, input=text.encode(), check=True, timeout=15)
 
     def close(self) -> None:
         return None
