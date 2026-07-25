@@ -71,6 +71,9 @@ class AsrService:
             execution_mode=config.asr_execution_mode,
         )
         self._pipeline: PipelineSession | None = None
+        # "notification" is a status toggle, not a text output: it enables the
+        # transient state messages below and is kept out of the text-output
+        # factory, so the transcript is never handed to notify-send.
         self._notifications_enabled = "notification" in config.outputs
         self._outputs = make_outputs(
             tuple(name for name in config.outputs if name != "notification")

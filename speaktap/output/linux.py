@@ -45,31 +45,14 @@ class TypingOutput:
         return None
 
 
-class NotificationOutput:
-    output_id = "notification"
-
-    def deliver(self, result: TranscriptionResult) -> None:
-        if not shutil.which("notify-send"):
-            raise RuntimeError("notification output needs notify-send")
-        summary = "Transcription"
-        body = result.output_text or "No speech detected"
-        subprocess.Popen(
-            ["notify-send", summary, body[:500]],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-
-    def close(self) -> None:
-        return None
-
-
 def make_outputs(names: tuple[str, ...]) -> tuple[OutputAdapter, ...]:
+    # Only text-delivery outputs live here. "notification" is not one: it toggles
+    # transient state messages (see notify_status), which announce progress and
+    # never carry the transcript, so it is handled by the service and rejected
+    # as unknown if it reaches this factory.
     factories: dict[str, Callable[[], OutputAdapter]] = {
         "clipboard": ClipboardOutput,
         "typing": TypingOutput,
-        "notification": NotificationOutput,
     }
     unknown = sorted(set(names) - factories.keys())
     if unknown:

@@ -130,11 +130,10 @@ command or in a small wrapper script. See
 - Session diagnostics under `~/.local/state/speaktap/` record timing, chunk
   boundaries, and character counts. They do not store transcript text. Failed
   sessions additionally record the error message, which can quote input.
-- Transcripts are handed to `xdotool` and `xclip` on standard input, so they do
-  not appear in the process table. The optional `notification` output is the
-  exception: `notify-send` takes the body as an argument, so enabling it makes
-  the first 500 characters readable through `/proc` by other local users for
-  the lifetime of the notification.
+- Transcripts are handed to `xdotool` and `xclip` on standard input, so they
+  never appear in the process table.
+- Desktop notifications announce only state and timing, such as "Transcribed
+  and typed (350ms)". They never contain the transcript.
 - Cleanup never runs commands or answers dictated questions. If cleanup fails,
   SpeakTap emits the assembled raw transcript.
 

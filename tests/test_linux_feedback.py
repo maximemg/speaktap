@@ -4,13 +4,35 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from speaktap.domain import CleanupStatus, TranscriptionResult
 from speaktap.output.linux import (
     ClipboardOutput,
     TypingOutput,
+    make_outputs,
     notify_status,
     play_sound,
 )
+
+
+def test_notification_is_not_a_transcript_delivering_output() -> None:
+    """`notification` toggles state messages; it must never deliver the text.
+
+    The service enables status notifications from this name but never routes
+    the transcript through it, so make_outputs (text outputs only) does not
+    know it. Anything that reintroduces a transcript-carrying notification,
+    which would put dictated text in the notify-send argv, fails here.
+    """
+
+    with pytest.raises(ValueError, match="notification"):
+        make_outputs(("notification",))
+
+
+def test_make_outputs_builds_the_known_text_outputs() -> None:
+    outputs = make_outputs(("typing", "clipboard"))
+
+    assert tuple(output.output_id for output in outputs) == ("typing", "clipboard")
 
 
 def _result(text: str) -> TranscriptionResult:
