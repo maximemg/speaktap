@@ -58,6 +58,9 @@ class ArecordSource:
             payload = self._read_exact(cast(BinaryIO, process.stdout), frame_bytes)
             if len(payload) != frame_bytes:
                 break
+            # Raw arecord output carries no timestamps. Positions are nominal,
+            # synthesized from complete frame count; ALSA underruns therefore
+            # are not represented as wall-clock gaps in start_ms.
             yield AudioFrame(
                 pcm_s16le=payload,
                 sample_rate=self._sample_rate,

@@ -124,6 +124,9 @@ class AdaptiveChunkPolicy:
             end_ms - start_ms,
             round(sum(item.frame.duration_ms for item in selected if item.activity.is_speech)),
         )
+        # AudioChunk requires overlap_ms to be strictly shorter than the chunk.
+        # Clamp retained prefix audio for unusually short chunks to preserve that
+        # domain invariant.
         overlap_ms = min(self._prefix_overlap_ms, end_ms - start_ms - 1)
         chunk = AudioChunk(
             session_id=self._session_id,
@@ -144,6 +147,9 @@ class AdaptiveChunkPolicy:
         self,
         frames: list[_AnalyzedFrame],
     ) -> list[_AnalyzedFrame]:
+        # max() is intentionally unguarded: every trim_trailing caller first
+        # proves _has_speech, which means this sequence contains a speech frame.
+        # Keep that caller invariant if new finalization paths are added.
         last_speech = max(index for index, item in enumerate(frames) if item.activity.is_speech)
         end = last_speech + 1
         padding = 0.0

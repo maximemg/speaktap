@@ -109,8 +109,15 @@ class OnnxAsrBackend:
 
     def transcribe(self, chunk: AudioChunk, *, language: str = "") -> AsrResult:
         self.load()
+        # frombuffer() initially returns a read-only view over the immutable bytes.
+        # astype() intentionally makes a writable float32 copy: every operation
+        # below mutates it in place, so replacing this with a zero-copy conversion
+        # would make transcription fail.
         samples = np.frombuffer(chunk.pcm_s16le, dtype="<i2").astype(np.float32)
         samples *= 1.0 / 32768.0
+        # Remove microphone DC bias, then give the decoder a consistent signal
+        # level. The 0.95 target leaves headroom for rounding instead of placing
+        # the loudest sample exactly on the clipping boundary.
         samples -= np.mean(samples)
         peak = float(np.max(np.abs(samples)))
         if peak > 1e-6:

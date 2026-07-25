@@ -22,8 +22,12 @@ def _is_filler(tokens: tuple[str, ...], keys: tuple[str, ...], index: int) -> bo
     if keys[index] not in _FILLERS:
         return False
     word = _WORDS.search(tokens[index])
+    # Preserve uppercase tokens such as "ER": they are likely acronyms, not the
+    # lowercase hesitation "er".
     if word and len(word.group()) > 1 and word.group().isupper():
         return False
+    # Preserve unit expressions such as "20 Ah" (ampere-hours), where "Ah" is
+    # semantic content rather than a hesitation.
     return not (
         keys[index] == "ah"
         and index > 0

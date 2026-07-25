@@ -21,6 +21,8 @@ from .domain import (
 from .segmentation.base import ChunkPolicy
 from .transcription.base import AsrBackend
 
+# Identity-only sentinel: it cannot collide with a valid queued chunk and lets
+# the single ASR worker drain all preceding work before terminating.
 _STOP = object()
 
 
@@ -78,6 +80,8 @@ class PipelineSession:
             self._cleanup_enabled = cleanup_enabled
             self._capture_error = None
             self._transcripts = {}
+            # Each chunk owns PCM bytes. Bounding the queue caps memory when ASR
+            # falls behind and deliberately propagates backpressure to capture.
             self._queue = queue.Queue(maxsize=self._max_pending_chunks)
             self._detector.reset()
             self._chunk_policy.reset(session_id)
@@ -191,6 +195,8 @@ class PipelineSession:
                 work_queue.task_done()
 
     def _build_result(self, *, stop_started: float) -> TranscriptionResult:
+        # _finish_asr() has joined the only writer before this method is called,
+        # so _transcripts is stable and can be read without taking _lock.
         chunks = tuple(transcript for _, transcript in sorted(self._transcripts.items()))
         assembly_started = time.monotonic()
         raw_text = assemble_transcript(chunks)
@@ -236,6 +242,9 @@ class PipelineSession:
 
     def _finish_asr(self) -> None:
         work_queue = self._require_queue()
+        # FIFO ordering puts the sentinel after every submitted chunk. join()
+        # waits for task_done() on both the chunks and sentinel; joining the
+        # thread then establishes that no transcript writer remains.
         work_queue.put(_STOP)
         work_queue.join()
         asr_thread = self._asr_thread

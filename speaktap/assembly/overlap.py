@@ -21,6 +21,9 @@ def assemble_transcript(chunks: tuple[TranscriptChunk, ...]) -> str:
 
 
 def _word_overlap(existing: list[str], incoming: list[str], limit: int = 16) -> int:
+    # Forced audio overlap is only a fraction of a second, so 16 words is a
+    # deliberately generous ceiling. The cap bounds comparison work and avoids
+    # deleting a long, legitimately repeated passage after a coincidental match.
     upper = min(len(existing), len(incoming), limit)
     normalized_existing = [_normalize(word) for word in existing]
     normalized_incoming = [_normalize(word) for word in incoming]

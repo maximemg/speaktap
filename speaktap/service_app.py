@@ -113,6 +113,8 @@ class AsrService:
             raise RuntimeError("state machine did not create a session")
         pipeline = make_pipeline(self._config, self._backend)
         try:
+            # Wait until the start cue has finished before opening arecord;
+            # otherwise the microphone can capture SpeakTap's own feedback sound.
             play_sound(
                 self._config.start_sound,
                 enabled=self._config.sounds_enabled,
