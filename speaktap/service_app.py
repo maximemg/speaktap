@@ -36,6 +36,11 @@ from .service import InvalidTransitionError, ServiceStateMachine
 from .transcription import OnnxAsrBackend
 
 _MAX_REQUEST_BYTES = 65_536
+# accept() hands back a blocking socket even when the listening socket has a
+# timeout, so an idle client would otherwise park the single-threaded accept
+# loop in recv() forever. The loop only checks the stop flag between
+# connections, so that hang also outlives SIGTERM and needs SIGKILL.
+_REQUEST_TIMEOUT_SECONDS = 5.0
 
 
 class AsrService:
@@ -244,7 +249,12 @@ class AsrService:
         return f"Transcription complete ({elapsed_ms}ms)."
 
 
-def _read_request(connection: socket.socket) -> bytes:
+def _read_request(
+    connection: socket.socket,
+    *,
+    timeout_seconds: float = _REQUEST_TIMEOUT_SECONDS,
+) -> bytes:
+    connection.settimeout(timeout_seconds)
     payload = bytearray()
     while len(payload) <= _MAX_REQUEST_BYTES:
         chunk = connection.recv(4096)
@@ -282,7 +292,11 @@ def _serve(service: AsrService, path: Path, stopping: threading.Event) -> None:
                         message=str(error),
                         session_id=snapshot.session_id,
                     )
-                with suppress(BrokenPipeError, ConnectionResetError):
+                # The connection now carries a timeout, so a peer that stops
+                # reading raises here as well as on recv. OSError covers that
+                # alongside the broken-pipe and reset cases; losing one reply is
+                # never worth taking the whole service down.
+                with suppress(OSError):
                     connection.sendall(encode_response(response))
     path.unlink(missing_ok=True)
 
