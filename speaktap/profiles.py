@@ -54,8 +54,7 @@ class AsrModelProfile:
         if not self.files or any(not filename for filename in self.files):
             raise ValueError("profile model files must not be empty")
         if len(self.sha256) != len(self.files) or any(
-            len(digest) != 64
-            or any(character not in "0123456789abcdef" for character in digest)
+            len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest)
             for digest in self.sha256
         ):
             raise ValueError("profile SHA-256 values must match every model file")

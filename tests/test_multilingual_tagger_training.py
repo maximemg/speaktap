@@ -4,12 +4,7 @@ import runpy
 from pathlib import Path
 from typing import Any, cast
 
-_SCRIPT = (
-    Path(__file__).parents[1]
-    / "benchmark"
-    / "cleanup"
-    / "train_multilingual_tagger.py"
-)
+_SCRIPT = Path(__file__).parents[1] / "benchmark" / "cleanup" / "train_multilingual_tagger.py"
 _MODULE = runpy.run_path(str(_SCRIPT))
 
 

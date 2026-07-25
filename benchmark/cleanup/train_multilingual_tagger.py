@@ -82,9 +82,7 @@ def derive_example(disfluent: str, fluent: str, language: str) -> Example | None
         return None
 
     source_keys = tuple(normalized_word(word) for word in words)
-    target_keys = tuple(
-        key for word in fluent_words if (key := normalized_word(word))
-    )
+    target_keys = tuple(key for word in fluent_words if (key := normalized_word(word)))
     labels = [DELETE] * len(words)
     target_index = len(target_keys) - 1
     for source_index in range(len(words) - 1, -1, -1):
@@ -153,8 +151,7 @@ def load_disco(data_dir: Path) -> tuple[list[Example], dict[str, Any]]:
     delete_ratio = delete_count / max(1, token_count)
     if not 0.1 <= delete_ratio <= 0.35:
         raise ValueError(
-            "unexpected DISCO label density: "
-            f"{delete_ratio:.2%} DELETE labels; expected 10% to 35%"
+            f"unexpected DISCO label density: {delete_ratio:.2%} DELETE labels; expected 10% to 35%"
         )
     return examples, {
         "accepted_by_language": accepted_by_language,
@@ -250,13 +247,8 @@ def choose_threshold(
         0.99,
         0.995,
     ]
-    metrics = [
-        metrics_for_threshold(probabilities, labels, threshold)
-        for threshold in candidates
-    ]
-    eligible = [
-        item for item in metrics if item.false_delete_rate <= max_false_delete_rate
-    ]
+    metrics = [metrics_for_threshold(probabilities, labels, threshold) for threshold in candidates]
+    eligible = [item for item in metrics if item.false_delete_rate <= max_false_delete_rate]
     selected = max(
         eligible or metrics,
         key=lambda item: (item.delete_f1, item.delete_precision, item.threshold),
@@ -315,8 +307,7 @@ def main() -> None:
         raise RuntimeError("CUDA was requested but is unavailable")
     device = torch.device(
         "cuda"
-        if args.device == "cuda"
-        or (args.device == "auto" and torch.cuda.is_available())
+        if args.device == "cuda" or (args.device == "auto" and torch.cuda.is_available())
         else "cpu"
     )
 

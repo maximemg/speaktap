@@ -360,7 +360,7 @@ def read_memory(pid: int) -> dict[str, int]:
             key, separator, value = line.partition(":")
             if separator and key in {"VmRSS", "VmHWM"}:
                 values[f"{key.lower()}_kib"] = int(value.split()[0])
-    except (OSError, ValueError, IndexError):
+    except OSError, ValueError, IndexError:
         return {}
     return values
 

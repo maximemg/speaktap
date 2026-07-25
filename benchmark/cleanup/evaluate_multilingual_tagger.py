@@ -118,9 +118,7 @@ def main() -> None:
     all_probabilities: list[float] = []
     all_labels: list[int] = []
     for language in sorted({example.language for example in testing}):
-        language_examples = [
-            example for example in testing if example.language == language
-        ]
+        language_examples = [example for example in testing if example.language == language]
         probabilities, labels = evaluate_language(
             session,
             tokenizer,
@@ -140,9 +138,7 @@ def main() -> None:
         "artifact": "model.int8.onnx",
         "threshold": threshold,
         "data": data_stats,
-        "aggregate": asdict(
-            metrics_for_threshold(all_probabilities, all_labels, threshold)
-        ),
+        "aggregate": asdict(metrics_for_threshold(all_probabilities, all_labels, threshold)),
         "by_language": by_language,
     }
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"

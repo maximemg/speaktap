@@ -93,8 +93,7 @@ def write_suite_report(
     for profile_id, summary in summaries.items():
         for dataset, metrics in summary.get("datasets", {}).items():
             lines.append(
-                f"| {profile_id} | {dataset} | {metrics['clips']} "
-                f"| {metrics['wer_percent']:.2f}% |"
+                f"| {profile_id} | {dataset} | {metrics['clips']} | {metrics['wer_percent']:.2f}% |"
             )
 
     lines.extend(

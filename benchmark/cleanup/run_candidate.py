@@ -279,9 +279,7 @@ def _parse_index_list(raw: str, key: str, token_count: int) -> tuple[int, ...]:
     if not isinstance(value, dict) or set(value) != {key}:
         raise ValueError("invalid-schema")
     indexes = value[key]
-    if not isinstance(indexes, list) or any(
-        type(index) is not int for index in indexes
-    ):
+    if not isinstance(indexes, list) or any(type(index) is not int for index in indexes):
         raise ValueError("invalid-index-type")
     if indexes != sorted(set(indexes)):
         raise ValueError("indexes-not-strictly-increasing")
@@ -337,16 +335,10 @@ def apply_token_selection(text: str, keep: tuple[int, ...]) -> SelectionDecision
     corrections = _correction_ranges(keys)
     for index, token in enumerate(tokens):
         correctable_time = bool(corrections) and keys[index] in _CORRECTABLE_TIME_TOKENS
-        if (
-            _is_protected_token(token, index)
-            and not correctable_time
-            and index not in kept
-        ):
+        if _is_protected_token(token, index) and not correctable_time and index not in kept:
             return SelectionDecision(text, False, f"protected-token-{index}", keep)
 
-    meaningful = [
-        index for index, key in enumerate(keys) if key and key not in _FILLER_TOKENS
-    ]
+    meaningful = [index for index, key in enumerate(keys) if key and key not in _FILLER_TOKENS]
     if meaningful and meaningful[-1] not in kept:
         return SelectionDecision(text, False, "final-token-deleted", keep)
 
@@ -380,15 +372,9 @@ def apply_token_selection(text: str, keep: tuple[int, ...]) -> SelectionDecision
                     keep,
                 )
         else:
-            pre_content = [
-                index
-                for index in range(marker_start)
-                if not simple_deletion(index)
-            ]
+            pre_content = [index for index in range(marker_start) if not simple_deletion(index)]
             post_content = [
-                index
-                for index in range(marker_end, len(tokens))
-                if not simple_deletion(index)
+                index for index in range(marker_end, len(tokens)) if not simple_deletion(index)
             ]
             kept_pre = [index for index in pre_content if index in kept]
             kept_post = [index for index in post_content if index in kept]
@@ -537,9 +523,8 @@ class MultilingualTaggerAdapter:
         if self._preclean:
             text = safe_cleanup_text(text)
         span_keys = {_token_key(token) for token in _span_tokens(text)}
-        if (
-            span_keys.intersection({"dash", "dot", "slash"})
-            or any(marker in text for marker in ("@", "/", "\\", "_", "="))
+        if span_keys.intersection({"dash", "dot", "slash"}) or any(
+            marker in text for marker in ("@", "/", "\\", "_", "=")
         ):
             self._fallbacks += 1
             return text
@@ -572,9 +557,7 @@ class MultilingualTaggerAdapter:
             if not token_indexes:
                 kept.append(value)
                 continue
-            predicted_delete = (
-                float(delete_probabilities[token_indexes[0]]) >= self._threshold
-            )
+            predicted_delete = float(delete_probabilities[token_indexes[0]]) >= self._threshold
             if predicted_delete and self._is_protected(value):
                 self._forced_keeps += 1
                 predicted_delete = False
@@ -796,9 +779,7 @@ class QwenConstrainedAdapter(QwenAdapter):
         try:
             if self._operation == "delete":
                 delete = set(parse_delete_indices(raw, len(tokens)))
-                keep = tuple(
-                    index for index in range(len(tokens)) if index not in delete
-                )
+                keep = tuple(index for index in range(len(tokens)) if index not in delete)
             else:
                 keep = parse_keep_indices(raw, len(tokens))
         except ValueError as error:
@@ -850,9 +831,7 @@ class PunctuateAdapter:
             providers=["CPUExecutionProvider"],
         )
         config = json.loads((root / "config.json").read_text())
-        self._labels = {
-            int(index): label for index, label in config["id2label"].items()
-        }
+        self._labels = {int(index): label for index, label in config["id2label"].items()}
 
     def clean(self, text: str) -> str:
         encoded = self._tokenizer(
@@ -988,9 +967,7 @@ def summarize(results: list[CaseResult]) -> dict[str, Any]:
         "exact_percent": 100 * sum(result.exact for result in results) / len(results),
         "word_error_percent": 100 * word_errors / expected_words,
         "character_error_percent": 100 * character_errors / expected_characters,
-        "anchor_preservation_percent": (
-            100 * anchors / anchor_count if anchor_count else 100.0
-        ),
+        "anchor_preservation_percent": (100 * anchors / anchor_count if anchor_count else 100.0),
         "forbidden_hits": sum(len(result.forbidden_hits) for result in results),
         "latency_median_ms": round(statistics.median(elapsed)),
         "latency_p90_ms": sorted(elapsed)[max(0, int(len(elapsed) * 0.9) - 1)],

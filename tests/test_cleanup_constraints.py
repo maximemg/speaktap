@@ -89,10 +89,7 @@ def test_selection_may_preserve_an_unresolved_correction_but_not_edit_around_it(
 
 
 def test_deterministic_cleanup_removes_only_fillers_and_repetition() -> None:
-    assert (
-        deterministic_disfluency_cleanup("um I I need this today")
-        == "I need this today"
-    )
+    assert deterministic_disfluency_cleanup("um I I need this today") == "I need this today"
     assert (
         deterministic_disfluency_cleanup("euh je vais je vais partir demain")
         == "je vais partir demain"
