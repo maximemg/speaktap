@@ -68,7 +68,7 @@ Test the interaction:
 
 On Ubuntu:
 
-1. Open **Settings → Keyboard → View and Customize Shortcuts → Custom
+1. Open **Settings -> Keyboard -> View and Customize Shortcuts -> Custom
    Shortcuts**.
 2. Add a shortcut named `SpeakTap`.
 3. Use the absolute path to `toggle.sh` as the command.
@@ -125,10 +125,16 @@ command or in a small wrapper script. See
 
 - Microphone audio is processed locally.
 - SpeakTap does not upload recordings or transcripts.
-- Models are downloaded from their pinned Hugging Face revisions.
-- Session diagnostics contain text and timing metadata under
-  `~/.local/state/speaktap/`; protect or delete them if the dictated content is
-  sensitive.
+- Models are downloaded from their pinned Hugging Face revisions and verified
+  against recorded SHA-256 digests before loading.
+- Session diagnostics under `~/.local/state/speaktap/` record timing, chunk
+  boundaries, and character counts. They do not store transcript text. Failed
+  sessions additionally record the error message, which can quote input.
+- Transcripts are handed to `xdotool` and `xclip` on standard input, so they do
+  not appear in the process table. The optional `notification` output is the
+  exception: `notify-send` takes the body as an argument, so enabling it makes
+  the first 500 characters readable through `/proc` by other local users for
+  the lifetime of the notification.
 - Cleanup never runs commands or answers dictated questions. If cleanup fails,
   SpeakTap emits the assembled raw transcript.
 

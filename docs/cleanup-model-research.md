@@ -173,7 +173,7 @@ Likewise, cascading `SafeCleaner` into the model at thresholds 0.95, 0.975, or
 
 ### Typurr
 
-- Changed “three thirty” to “three.”
+- Changed "three thirty" to "three."
 - Changed exact identifiers such as `process_audio_chunk` and
   `api.example.com/v2` through unwanted capitalization.
 - Deleted content from dictated commands.
@@ -205,8 +205,8 @@ incremental product value must be measured before integration.
   producing an answer, refusal, or executed command.
 - Preserved all English anchors and every technical identifier in both
   languages.
-- Silently dropped meaningful French words including “vendredi,” “demain,”
-  and “maintenant”; this is a faithfulness failure that a simple protected-span
+- Silently dropped meaningful French words including "vendredi," "demain,"
+  and "maintenant"; this is a faithfulness failure that a simple protected-span
   check cannot reliably detect.
 - Took 1.8 seconds median per short input and approximately 961 MiB RSS. This
   is much better than Mumble but still material beside the ASR model on CPU.
@@ -255,7 +255,7 @@ raw transcript.
 
 The keep-list model mostly selected every token. The shorter delete-list model
 mostly returned an empty list. On the one English correction it attempted,
-Qwen copied an example's index pattern and produced “send the it on Friday.”
+Qwen copied an example's index pattern and produced "send the it on Friday."
 The splice validator rejected that result and returned the raw input. Qwen also
 wrapped three JSON responses in Markdown despite explicit output instructions.
 
@@ -267,7 +267,7 @@ deterministic baseline. Qwen3 0.6B should not be integrated for cleanup.
 ### Mumble
 
 - Changed `HTTP 429` to `HTTP/1.1`.
-- Answered a dictated question with “The capital of France is Paris.”
+- Answered a dictated question with "The capital of France is Paris."
 - Turned spoken command text into `rm -rf README.md`.
 - Replaced a clean sentence with meta-commentary.
 - Produced English refusals and instructions for French input.

@@ -16,6 +16,9 @@ running.
 The version numbers in these identifiers are upstream model names, not SpeakTap
 release generations.
 
+`fast` is an alias for the default profile, so `./install.sh --profile fast`
+resolves to `parakeet-tdt-v3-int8`.
+
 ## Reproducible artifacts
 
 Every profile pins:

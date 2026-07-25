@@ -80,8 +80,13 @@ class PipelineSession:
             self._cleanup_enabled = cleanup_enabled
             self._capture_error = None
             self._transcripts = {}
-            # Each chunk owns PCM bytes. Bounding the queue caps memory when ASR
-            # falls behind and deliberately propagates backpressure to capture.
+            # Each chunk owns its PCM bytes, so an unbounded queue grows without
+            # limit whenever ASR runs slower than realtime. Bounding it blocks
+            # the capture thread instead, which stops draining arecord until the
+            # pipe fills and ALSA overruns: audio is dropped, not buffered. That
+            # is the deliberate trade, bounded memory over completeness, and at
+            # the default of eight chunks it only engages if ASR falls far
+            # behind.
             self._queue = queue.Queue(maxsize=self._max_pending_chunks)
             self._detector.reset()
             self._chunk_policy.reset(session_id)

@@ -68,10 +68,10 @@ def test_notification_contains_lifecycle_message(monkeypatch: Any) -> None:
         lambda command, **_kwargs: commands.append(command),
     )
 
-    notify_status("Transcribing…")
+    notify_status("Transcribing...")
 
     assert commands
-    assert commands[0][-1] == "Transcribing…"
+    assert commands[0][-1] == "Transcribing..."
     assert "notify-send" in commands[0]
 
 

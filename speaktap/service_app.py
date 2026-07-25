@@ -159,7 +159,7 @@ class AsrService:
             self._state.fail(error)
             raise
         self._pipeline = pipeline
-        self._notify(f"Recording started (maximum {self._config.max_recording_seconds:g}s)…")
+        self._notify(f"Recording started (maximum {self._config.max_recording_seconds:g}s)...")
         return CommandResponse(
             ok=True,
             state=ServiceState.RECORDING,
@@ -170,7 +170,7 @@ class AsrService:
     def _stop(self) -> CommandResponse:
         started = time.monotonic()
         snapshot = self._state.begin_finalization()
-        self._notify("Transcribing…")
+        self._notify("Transcribing...")
         pipeline = self._pipeline
         if pipeline is None:
             self._state.fail("recording pipeline is missing")

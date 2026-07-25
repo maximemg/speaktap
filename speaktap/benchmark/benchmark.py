@@ -475,7 +475,7 @@ def main() -> None:
         inter_op_threads=config.asr_inter_op_threads,
         execution_mode=config.asr_execution_mode,
     )
-    print(f"Loading {config.model_profile.display_name}…", flush=True)
+    print(f"Loading {config.model_profile.display_name}...", flush=True)
     backend.load()
 
     all_rows: list[ClipResult] = []

@@ -1,7 +1,7 @@
 # Configuration
 
 SpeakTap reads `SPEAKTAP_*` environment variables when the service starts. The
-model profile is the exception: `./install.sh --profile …` writes it to
+model profile is the exception: `./install.sh --profile ...` writes it to
 `~/.config/speaktap/config.json`, and the running service deliberately ignores
 `SPEAKTAP_PROFILE`. This prevents accidental model changes and multiple large
 models in memory.

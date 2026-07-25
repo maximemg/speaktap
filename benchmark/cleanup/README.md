@@ -61,7 +61,7 @@ uv run --script evaluate_multilingual_tagger.py \
   --output ../../benchmark/results/cleanup-multilingual-tagger-corpus.json
 ```
 
-The trainer refuses data whose DELETE-label density falls outside 10–35%.
+The trainer refuses data whose DELETE-label density falls outside 10-35%.
 This guards against accidental source/source alignment. The upstream DISCO
 repository currently has no explicit `LICENSE` file, so trained artifacts are
 local experiments and must not be redistributed until licensing is clarified.

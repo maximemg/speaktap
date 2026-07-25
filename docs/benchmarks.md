@@ -16,10 +16,10 @@ files plus an exact transcript map:
 
 ```text
 dataset/
-├── metadata.env
-├── reference.txt
-├── normal-01.raw
-└── noisy-01.raw
+|-- metadata.env
+|-- reference.txt
+|-- normal-01.raw
+`-- noisy-01.raw
 ```
 
 `metadata.env` may define one language:

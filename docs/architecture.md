@@ -241,15 +241,15 @@ or auto-detected.
 
 ```text
 $XDG_RUNTIME_DIR/speaktap/
-├── service.sock
-├── service.lock
-└── service.log
+|-- service.sock
+|-- service.lock
+`-- service.log
 
 $XDG_CONFIG_HOME/speaktap/
-└── config.json
+`-- config.json
 
 $XDG_STATE_HOME/speaktap/
-└── sessions.jsonl
+`-- sessions.jsonl
 ```
 
 Fallbacks are `~/.config/speaktap`, `~/.local/state/speaktap`, and a
@@ -264,12 +264,12 @@ revision.
 
 SpeakTap degrades toward the simplest usable result:
 
-1. cleanup succeeds → emit cleaned text;
-2. cleanup fails → emit assembled raw text;
-3. one chunk fails → preserve successful chunks and report the failure;
-4. typing fails → clipboard remains available;
-5. notification or sound fails → transcription continues;
-6. service failure → runtime logs remain available for diagnosis.
+1. cleanup succeeds -> emit cleaned text;
+2. cleanup fails -> emit assembled raw text;
+3. one chunk fails -> preserve successful chunks and report the failure;
+4. typing fails -> clipboard remains available;
+5. notification or sound fails -> transcription continues;
+6. service failure -> runtime logs remain available for diagnosis.
 
 No optional stage may turn a valid raw transcript into a lost transcription.
 
