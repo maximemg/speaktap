@@ -11,6 +11,7 @@ import time
 from contextlib import suppress
 from pathlib import Path
 from types import FrameType
+from typing import Protocol
 
 from .capture import ArecordSource
 from .config import SpeakTapConfig
@@ -32,7 +33,7 @@ from .protocol import (
     encode_response,
 )
 from .runtime import lock_path, session_log_path, socket_path
-from .service import InvalidTransitionError, ServiceStateMachine
+from .service import InvalidTransitionError, ServiceSnapshot, ServiceStateMachine
 from .transcription import OnnxAsrBackend
 
 _MAX_REQUEST_BYTES = 65_536
@@ -41,6 +42,21 @@ _MAX_REQUEST_BYTES = 65_536
 # loop in recv() forever. The loop only checks the stop flag between
 # connections, so that hang also outlives SIGTERM and needs SIGKILL.
 _REQUEST_TIMEOUT_SECONDS = 5.0
+
+
+class CommandHandler(Protocol):
+    """The surface the socket loop is allowed to use.
+
+    Keeping the transport behind this protocol stops it from reaching into
+    service internals to build an error reply, and lets the loop be tested
+    without constructing an ASR backend.
+    """
+
+    shutdown_requested: threading.Event
+
+    def snapshot(self) -> ServiceSnapshot: ...
+
+    def handle(self, command: Command) -> CommandResponse: ...
 
 
 class AsrService:
@@ -73,10 +89,15 @@ class AsrService:
             output.close()
         self._backend.close()
 
+    def snapshot(self) -> ServiceSnapshot:
+        """Report current service state for callers outside the state machine."""
+
+        return self._state.snapshot()
+
     def handle(self, command: Command) -> CommandResponse:
         try:
             if isinstance(command, StatusCommand):
-                snapshot = self._state.snapshot()
+                snapshot = self.snapshot()
                 message = snapshot.last_error or snapshot.state.value
                 return CommandResponse(
                     ok=True,
@@ -284,7 +305,7 @@ def _read_request(
     return bytes(payload)
 
 
-def _serve(service: AsrService, path: Path, stopping: threading.Event) -> None:
+def _serve(service: CommandHandler, path: Path, stopping: threading.Event) -> None:
     if path.exists():
         path.unlink()
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
@@ -301,7 +322,7 @@ def _serve(service: AsrService, path: Path, stopping: threading.Event) -> None:
                 try:
                     response = service.handle(decode_command(_read_request(connection)))
                 except Exception as error:
-                    snapshot = service._state.snapshot()
+                    snapshot = service.snapshot()
                     response = CommandResponse(
                         ok=False,
                         state=snapshot.state,
