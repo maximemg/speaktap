@@ -172,7 +172,14 @@ class AsrService:
                 )
             except OSError as log_error:
                 output_errors += (f"diagnostics: {log_error}",)
-            self._notify(self._completion_message(result.output_text, output_errors, elapsed_ms))
+            self._notify(
+                self._completion_message(
+                    result.output_text,
+                    output_errors,
+                    elapsed_ms,
+                    chunk_errors=result.chunk_errors,
+                )
+            )
             self._state.complete()
             self._pipeline = None
         except Exception as error:
@@ -188,9 +195,12 @@ class AsrService:
                 )
             self._notify(f"Transcription failed ({elapsed_ms}ms).")
             raise
+        # Transcription failures come first: a hole in the transcript matters
+        # more to the caller than an output adapter that did not fire.
+        warnings = result.chunk_errors + output_errors
         message = "transcription complete"
-        if output_errors:
-            message += f" (output warnings: {'; '.join(output_errors)})"
+        if warnings:
+            message += f" (warnings: {'; '.join(warnings)})"
         return CommandResponse(
             ok=True,
             state=ServiceState.IDLE,
@@ -237,7 +247,13 @@ class AsrService:
         text: str,
         output_errors: tuple[str, ...],
         elapsed_ms: int,
+        *,
+        chunk_errors: tuple[str, ...] = (),
     ) -> str:
+        # An incomplete transcript must never be announced as a plain success,
+        # otherwise the user retypes nothing and never learns speech was lost.
+        if chunk_errors:
+            return f"Transcribed with {len(chunk_errors)} failed segment(s) ({elapsed_ms}ms)."
         if not text:
             return f"Transcription empty ({elapsed_ms}ms)."
         failed = {error.partition(":")[0] for error in output_errors}

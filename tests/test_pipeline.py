@@ -59,6 +59,16 @@ class DisfluentBackend(FakeBackend):
         )
 
 
+class FlakyBackend(FakeBackend):
+    """Fail the first chunk only, so a mid-transcript gap is produced."""
+
+    def transcribe(self, chunk: AudioChunk, *, language: str = "") -> AsrResult:
+        del language
+        if chunk.sequence == 0:
+            raise RuntimeError("decoder unavailable")
+        return AsrResult(text=f"chunk {chunk.sequence}", backend_id=self.backend_id)
+
+
 def _speech_frames(count: int) -> tuple[AudioFrame, ...]:
     sample = (6_000).to_bytes(2, "little", signed=True)
     return tuple(
@@ -98,6 +108,35 @@ def test_finite_source_runs_through_chunking_asr_and_assembly() -> None:
     assert result.output_text == "chunk 0 chunk 1"
     assert len(result.chunks) == 2
     assert result.cleanup_status is CleanupStatus.DISABLED
+
+
+def test_failed_chunk_is_reported_rather_than_silently_dropped() -> None:
+    pipeline = PipelineSession(
+        detector=AdaptiveEnergyDetector(),
+        chunk_policy=AdaptiveChunkPolicy(
+            min_chunk_seconds=0.1,
+            target_chunk_seconds=0.2,
+            max_chunk_seconds=0.3,
+            silence_milliseconds=40,
+            padding_milliseconds=20,
+            forced_cut_overlap_milliseconds=40,
+        ),
+        backend=FlakyBackend(),
+        cleaner=NoopCleaner(),
+        max_recording_seconds=10,
+    )
+    pipeline.start(
+        FiniteSource(_speech_frames(20)),
+        session_id="session",
+        cleanup_enabled=False,
+    )
+
+    result = pipeline.wait()
+
+    # The surviving chunk is still delivered, but the caller must be able to
+    # see that the transcript has a hole rather than treating it as complete.
+    assert result.output_text == "chunk 1"
+    assert result.chunk_errors == ("chunk 0: decoder unavailable",)
 
 
 def test_enabled_safe_cleanup_runs_once_after_final_assembly() -> None:

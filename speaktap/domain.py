@@ -230,6 +230,21 @@ class TranscriptionResult:
     def output_text(self) -> str:
         return self.cleaned_text if self.cleaned_text is not None else self.raw_text
 
+    @property
+    def chunk_errors(self) -> tuple[str, ...]:
+        """Describe chunks whose transcription failed, in sequence order.
+
+        A failed chunk contributes empty text, so assembly drops it and the
+        transcript silently loses that span of speech. Callers must surface
+        these before presenting the result as a complete transcript.
+        """
+
+        return tuple(
+            f"chunk {chunk.sequence}: {chunk.error}"
+            for chunk in sorted(self.chunks, key=lambda item: item.sequence)
+            if chunk.error is not None
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class SessionOptions:
