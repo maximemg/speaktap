@@ -69,7 +69,7 @@ def write_suite_report(
     for run in runs:
         summary = summaries.get(run.profile_id)
         if summary is None:
-            lines.append(f"| {run.profile_id} | {run.status} | — | — | — | — |")
+            lines.append(f"| {run.profile_id} | {run.status} | - | - | - | - |")
             continue
         totals = summary.get("totals", {})
         memory = summary.get("memory", {}).get("vmrss_kib", 0) / 1024

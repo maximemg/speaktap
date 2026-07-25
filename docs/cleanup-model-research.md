@@ -1,4 +1,4 @@
-# Cleanup candidate results — 2026-07-24
+# Cleanup candidate results - 2026-07-24
 
 ## Decision
 
@@ -72,7 +72,7 @@ microphone transcripts.
 | `qwen3-0.6b-int4` | Decoder-only generative model | 512 MiB ONNX/ORT GenAI int4 | 12.5% | 11.2% | 93.3% | 1787 ms | 2247 ms | 961 MiB | Candidate rejected in raw form |
 | `qwen3-token-delete` | Validated generative token selection | 512 MiB ONNX/ORT GenAI int4 | 12.5% | 20.8% | 100.0% | 1397 ms | 1623 ms | 1019 MiB | Safe but worse than rules |
 | `mumble-cleanup-int8` | Decoder-only Qwen 0.5B | 473 MiB ONNX int8 | 12.5% | 110.4% | 40.0% | 2989 ms | 5744 ms | 2284 MiB | Rejected |
-| multilingual mT5-small | Encoder-decoder | 1.2 GiB framework weights | — | — | — | >20 s observed | — | — | Export-blocked and rejected |
+| multilingual mT5-small | Encoder-decoder | 1.2 GiB framework weights | - | - | - | >20 s observed | - | - | Export-blocked and rejected |
 | custom multilingual edit tagger | Encoder-only edit tagger | Trained locally | 12.5% | 16.8% | 100.0% | 10 ms | 17 ms | 253 MiB | First experiment rejected |
 
 ### Per-language content results
@@ -157,7 +157,7 @@ Likewise, cascading `SafeCleaner` into the model at thresholds 0.95, 0.975, or
    trade-off: 15.2% WER, 100% protected preservation, sub-millisecond latency,
    and no model memory.
 2. Encoder taggers are fast enough for this pipeline, but safety must cover all
-   ordinary content—not only identifiers, URLs, names, and numbers.
+   ordinary content-not only identifiers, URLs, names, and numbers.
 3. A punctuation-only tagger is technically viable, but Parakeet already emits
    punctuation and the measured candidate does not remove disfluencies.
 4. Small generative models can improve aggregate WER while silently changing

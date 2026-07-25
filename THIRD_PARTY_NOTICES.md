@@ -8,10 +8,10 @@ checkpoints are distributed in this repository.
 
 ## Runtime software
 
-- [`onnx-asr`](https://github.com/istupakov/onnx-asr) — MIT
-- [ONNX Runtime](https://github.com/microsoft/onnxruntime) — MIT
-- [NumPy](https://github.com/numpy/numpy) — BSD-3-Clause
-- [Hugging Face Hub client](https://github.com/huggingface/huggingface_hub) —
+- [`onnx-asr`](https://github.com/istupakov/onnx-asr) - MIT
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime) - MIT
+- [NumPy](https://github.com/numpy/numpy) - BSD-3-Clause
+- [Hugging Face Hub client](https://github.com/huggingface/huggingface_hub) -
   Apache-2.0
 
 The exact resolved dependency versions and transitive packages are recorded in
@@ -20,11 +20,11 @@ The exact resolved dependency versions and transitive packages are recorded in
 ## ASR artifacts
 
 - [`istupakov/parakeet-tdt-0.6b-v3-onnx`](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx)
-  — CC-BY-4.0 according to its model repository; derived from NVIDIA Parakeet.
+  - CC-BY-4.0 according to its model repository; derived from NVIDIA Parakeet.
 - [`istupakov/canary-1b-v2-onnx`](https://huggingface.co/istupakov/canary-1b-v2-onnx)
-  — CC-BY-4.0 according to its model repository; derived from NVIDIA Canary.
+  - CC-BY-4.0 according to its model repository; derived from NVIDIA Canary.
 - [`onnx-community/whisper-large-v3-turbo`](https://huggingface.co/onnx-community/whisper-large-v3-turbo)
-  — converted from OpenAI Whisper (MIT). The conversion repository does not
+  - converted from OpenAI Whisper (MIT). The conversion repository does not
   currently expose an explicit license in its metadata, so SpeakTap keeps it
   at candidate status and does not redistribute its artifacts.
 
