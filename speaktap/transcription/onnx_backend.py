@@ -53,8 +53,16 @@ class OnnxAsrBackend:
         )
 
     def load(self) -> None:
-        if self._model is not None:
-            return
+        # The check and the build are both held under the lock. Splitting them
+        # would let two threads pass the check before either finished, and a
+        # second build downloads, checksums, and holds an entire extra ONNX
+        # session. The lock is uncontended in practice: one warm worker calls
+        # this, and it is already re-acquired for inference immediately after.
+        with self._lock:
+            if self._model is None:
+                self._model = self._build_model()
+
+    def _build_model(self) -> Any:
         from huggingface_hub import snapshot_download
         from onnx_asr import load_model
 
@@ -75,7 +83,7 @@ class OnnxAsrBackend:
             else ort.ExecutionMode.ORT_SEQUENTIAL
         )
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        self._model = load_model(
+        return load_model(
             self._model_name,
             path=model_path,
             quantization=self._quantization,
@@ -103,9 +111,13 @@ class OnnxAsrBackend:
 
     def warmup(self) -> None:
         self.load()
-        waveform = np.zeros(8_000, dtype=np.float32)
+        # Half a second of silence at whatever rate the profile requires. Using
+        # a fixed rate here would warm the graph with a resampling path the real
+        # sessions never take.
+        sample_rate = self._profile.required_sample_rate
+        waveform = np.zeros(sample_rate // 2, dtype=np.float32)
         with self._lock:
-            self._recognize(waveform, sample_rate=16_000, language="")
+            self._recognize(waveform, sample_rate=sample_rate, language="")
 
     def transcribe(self, chunk: AudioChunk, *, language: str = "") -> AsrResult:
         self.load()
