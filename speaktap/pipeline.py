@@ -201,30 +201,35 @@ class PipelineSession:
         assembly_started = time.monotonic()
         raw_text = assemble_transcript(chunks)
         assembly_ms = round((time.monotonic() - assembly_started) * 1000)
-        cleanup_started = time.monotonic()
-        cleanup = self._cleaner.clean(
-            raw_text,
-            chunks,
-            timeout_seconds=self._cleanup_timeout_seconds,
-        )
-        cleanup_ms = round((time.monotonic() - cleanup_started) * 1000)
-        cleaned_text = (
-            cleanup.text
-            if self._cleanup_enabled and cleanup.status is CleanupStatus.SUCCESS
-            else None
-        )
+        # Skip the stage entirely when disabled. Running it and discarding the
+        # result burned CPU on every session and reported a cleanup time of
+        # zero, which hid the cost from the diagnostics that would reveal it.
+        cleaned_text: str | None = None
+        cleanup_status = CleanupStatus.DISABLED
+        cleanup_ms = 0
+        if self._cleanup_enabled:
+            cleanup_started = time.monotonic()
+            cleanup = self._cleaner.clean(
+                raw_text,
+                chunks,
+                timeout_seconds=self._cleanup_timeout_seconds,
+            )
+            cleanup_ms = round((time.monotonic() - cleanup_started) * 1000)
+            cleanup_status = cleanup.status
+            if cleanup.status is CleanupStatus.SUCCESS:
+                cleaned_text = cleanup.text
         finished_at = time.monotonic()
         return TranscriptionResult(
             session_id=self._session_id,
             raw_text=raw_text,
             cleaned_text=cleaned_text,
-            cleanup_status=(cleanup.status if self._cleanup_enabled else CleanupStatus.DISABLED),
+            cleanup_status=cleanup_status,
             chunks=chunks,
             timings_ms={
                 "session": round((finished_at - self._started_at) * 1000),
                 "post_stop": round((finished_at - stop_started) * 1000),
                 "assembly": assembly_ms,
-                "cleanup": cleanup_ms if self._cleanup_enabled else 0,
+                "cleanup": cleanup_ms,
                 "asr_total": sum(chunk.asr_duration_ms for chunk in chunks),
                 "asr_max": max(
                     (chunk.asr_duration_ms for chunk in chunks),
