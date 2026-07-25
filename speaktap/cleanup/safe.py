@@ -12,6 +12,39 @@ _SPANS = re.compile(r"\S+")
 _FILLERS = frozenset({"ah", "er", "euh", "heu", "hmm", "uh", "um"})
 _MAX_REPEATED_PHRASE_WORDS = 4
 
+# Words whose immediate repetition is not a disfluency, so deleting the second
+# token would change meaning rather than remove noise. Cleanup only claims
+# unambiguous edits, so these are exempt from single-word repetition removal.
+# Repeated multi-word phrases are still removed, and a longer stutter such as
+# "nous nous nous nous" collapses onto the grammatical pair rather than past it.
+_GRAMMATICAL_DOUBLES = frozenset(
+    {
+        # French subject pronoun followed by the identical reflexive pronoun,
+        # as in "nous nous levons" and "vous vous trompez".
+        "nous",
+        "vous",
+        # French emphatic affirmation and negation: "si si", "non non".
+        "si",
+        "non",
+        "oui",
+        # English doubling that grammar requires: past perfect "had had",
+        # complementizer plus demonstrative "that that", and the pseudo-cleft
+        # "what it is is".
+        "had",
+        "that",
+        "is",
+        # Conventional intensifiers and interjections where the repetition
+        # carries the emphasis: "very very cold", "a long long time".
+        "very",
+        "well",
+        "no",
+        "yes",
+        "many",
+        "long",
+        "far",
+    }
+)
+
 
 def _token_key(token: str) -> str:
     match = _WORDS.search(token)
@@ -50,10 +83,15 @@ def safe_cleanup_text(text: str) -> str:
             _MAX_REPEATED_PHRASE_WORDS,
             (len(tokens) - index) // 2,
         )
+        # Widths are tried longest first, so a repeated phrase is always matched
+        # before the single-word rule and stays removable.
         for width in range(max_width, 0, -1):
-            if keys[index : index + width] == keys[index + width : index + 2 * width]:
-                repeated_width = width
+            if keys[index : index + width] != keys[index + width : index + 2 * width]:
+                continue
+            if width == 1 and keys[index] in _GRAMMATICAL_DOUBLES:
                 break
+            repeated_width = width
+            break
         if repeated_width:
             keep.extend(range(index, index + repeated_width))
             index += 2 * repeated_width

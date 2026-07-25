@@ -74,6 +74,44 @@ def test_safe_cleanup_text_applies_only_high_confidence_edits(
     assert safe_cleanup_text(raw) == expected
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        # French subject pronoun followed by the identical reflexive pronoun.
+        "nous nous levons de bonne heure",
+        "vous vous trompez souvent",
+        # English doubling that grammar requires.
+        "I had had enough of it",
+        "I think that that argument fails",
+        "what it is is a scheduling problem",
+        # Conventional intensifiers and interjections.
+        "it was very very cold",
+        "we waited a long long time",
+        "no no send it tomorrow",
+    ],
+)
+def test_safe_cleanup_text_preserves_grammatical_doubling(raw: str) -> None:
+    assert safe_cleanup_text(raw) == raw
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        # Doubling that is never grammatical stays removable.
+        ("the the cat sat down", "the cat sat down"),
+        ("I I think so", "I think so"),
+        ("je vais je vais partir demain", "je vais partir demain"),
+        # A longer stutter collapses onto the grammatical pair, not past it.
+        ("nous nous nous nous levons", "nous nous levons"),
+    ],
+)
+def test_safe_cleanup_text_still_removes_disfluent_repetition(
+    raw: str,
+    expected: str,
+) -> None:
+    assert safe_cleanup_text(raw) == expected
+
+
 def test_safe_cleaner_returns_a_successful_cleanup_result() -> None:
     result = SafeCleaner().clean(
         "uh this this works",
