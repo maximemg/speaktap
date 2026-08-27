@@ -142,13 +142,6 @@ class AsrService:
             raise RuntimeError("state machine did not create a session")
         pipeline = make_pipeline(self._config, self._backend)
         try:
-            # Wait until the start cue has finished before opening arecord;
-            # otherwise the microphone can capture SpeakTap's own feedback sound.
-            play_sound(
-                self._config.start_sound,
-                enabled=self._config.sounds_enabled,
-                wait=True,
-            )
             pipeline.start(
                 ArecordSource(
                     device=self._config.audio_device,
@@ -161,6 +154,16 @@ class AsrService:
         except Exception as error:
             self._state.fail(error)
             raise
+        # Cue the speaker only once capture is live, and never block on
+        # playback. Speakers start talking as the cue begins, so playing it
+        # first cost every session the full cue duration plus the ALSA open.
+        # The microphone is open while the cue plays, so the cue is recorded;
+        # a long start_sound overlaps the first words instead of truncating
+        # them, which is the intended trade.
+        play_sound(
+            self._config.start_sound,
+            enabled=self._config.sounds_enabled,
+        )
         self._pipeline = pipeline
         self._notify(f"Recording started (maximum {self._config.max_recording_seconds:g}s)...")
         return CommandResponse(

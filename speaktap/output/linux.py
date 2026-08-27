@@ -94,29 +94,17 @@ def notify_status(message: str, *, expire_milliseconds: int = 1_500) -> None:
     )
 
 
-def play_sound(
-    path: str,
-    *,
-    enabled: bool = True,
-    wait: bool = False,
-) -> None:
-    """Play a desktop cue through PulseAudio/PipeWire."""
+def play_sound(path: str, *, enabled: bool = True) -> None:
+    """Play a desktop cue through PulseAudio/PipeWire without ever blocking.
+
+    Cues are feedback, never a gate: the start cue used to be awaited so the
+    microphone could not record it, which delayed capture by the whole cue.
+    """
 
     if not enabled or not Path(path).is_file() or not shutil.which("paplay"):
         return
-    command = ["paplay", path]
-    if wait:
-        subprocess.run(
-            command,
-            check=False,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=10,
-        )
-        return
     subprocess.Popen(
-        command,
+        ["paplay", path],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

@@ -14,7 +14,7 @@ models in memory.
 | `SPEAKTAP_AUDIO_DEVICE` | `default` | ALSA capture device |
 | `SPEAKTAP_OUTPUTS` | `typing,clipboard,notification` | Comma-separated output adapters |
 | `SPEAKTAP_SOUNDS_ENABLED` | `true` | Play start and stop feedback |
-| `SPEAKTAP_START_SOUND` | freedesktop login sound | Start sound file |
+| `SPEAKTAP_START_SOUND` | freedesktop login sound | Start sound file; capture is live while it plays, so the microphone records it |
 | `SPEAKTAP_STOP_SOUND` | freedesktop logout sound | Stop sound file |
 | `SPEAKTAP_CLEANUP_ENABLED` | `true` | Enable deterministic safe cleanup |
 | `SPEAKTAP_MAX_RECORDING_SECONDS` | `300` | Hard recording limit |

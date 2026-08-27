@@ -53,6 +53,11 @@ class SpeakTapConfig:
     cleanup_timeout_seconds: float = 2.0
     outputs: tuple[str, ...] = ("typing", "clipboard", "notification")
     sounds_enabled: bool = True
+    # Capture is already live when the start cue plays, so the microphone can
+    # record the cue itself. That is the deliberate trade for opening the
+    # device first: the cue length is now overlap with the first words rather
+    # than audio lost before them. The stop cue is unaffected, it only plays
+    # once capture has stopped.
     start_sound: str = "/usr/share/sounds/freedesktop/stereo/service-login.oga"
     stop_sound: str = "/usr/share/sounds/freedesktop/stereo/service-logout.oga"
 

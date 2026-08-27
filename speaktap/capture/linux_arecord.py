@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import os
+import select
 import subprocess
 import threading
 from collections.abc import Iterator
 from typing import BinaryIO, cast
 
 from ..domain import AudioFrame
+
+# Opening the ALSA device costs ~100-150 ms locally before the first sample
+# arrives. start() absorbs that wait so callers can cue the speaker against a
+# live microphone, but it must never hang the hotkey on a wedged device.
+_PRIME_TIMEOUT_SECONDS = 1.0
 
 
 class ArecordSource:
@@ -23,11 +30,13 @@ class ArecordSource:
         self._frame_milliseconds = frame_milliseconds
         self._process: subprocess.Popen[bytes] | None = None
         self._stopping = threading.Event()
+        self._pending = b""
 
     def start(self) -> None:
         if self._process is not None:
             raise RuntimeError("arecord source is already running")
         self._stopping.clear()
+        self._pending = b""
         self._process = subprocess.Popen(
             [
                 "arecord",
@@ -46,6 +55,24 @@ class ArecordSource:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        if self._process.stdout is not None:
+            self._prime(cast(BinaryIO, self._process.stdout))
+
+    def _prime(self, stream: BinaryIO) -> None:
+        """Return once the device is delivering audio, or the timeout expires.
+
+        A failed open closes stdout instead of writing to it, which select
+        reports as readable and os.read reports as EOF, so the error still
+        surfaces through frames() rather than stalling here for a second.
+        Bytes are read from the raw descriptor while the buffered reader is
+        still empty, so holding them here preserves stream order.
+        """
+
+        readable, _, _ = select.select([stream], [], [], _PRIME_TIMEOUT_SECONDS)
+        if not readable:
+            return
+        samples_per_frame = self._sample_rate * self._frame_milliseconds // 1000
+        self._pending = os.read(stream.fileno(), samples_per_frame * 2)
 
     def frames(self) -> Iterator[AudioFrame]:
         process = self._require_process()
@@ -79,6 +106,7 @@ class ArecordSource:
 
     def stop(self) -> None:
         self._stopping.set()
+        self._pending = b""
         process = self._process
         if process is None:
             return
@@ -96,10 +124,13 @@ class ArecordSource:
             raise RuntimeError("arecord source has not been started")
         return self._process
 
-    @staticmethod
-    def _read_exact(stream: BinaryIO, length: int) -> bytes:
+    def _read_exact(self, stream: BinaryIO, length: int) -> bytes:
         chunks: list[bytes] = []
         remaining = length
+        if self._pending:
+            chunks.append(self._pending[:remaining])
+            self._pending = self._pending[remaining:]
+            remaining -= len(chunks[0])
         while remaining:
             chunk = stream.read(remaining)
             if not chunk:
